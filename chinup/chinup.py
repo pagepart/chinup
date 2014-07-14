@@ -176,7 +176,7 @@ class Chinup(object):
         # a 500 error if you request past the end. Try to avoid that.
         limit = (self.response.get('limit') or
                  URL(next_link).query_dict.get('limit'))
-        if limit and len(self.data) < limit:
+        if limit and len(self.data) < int(limit):
             return
 
         # Instantiate without token, since next_link will already
