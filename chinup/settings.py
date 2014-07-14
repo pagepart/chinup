@@ -20,4 +20,4 @@ else:
             locals()[name[7:]] = getattr(settings, name)
 
 
-__all__ = [name for name in locals() if name.isupper()]
+__all__ = [name for name in locals().keys() if name.isupper()]
