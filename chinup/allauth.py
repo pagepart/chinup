@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from allauth.socialaccount.models import SocialToken
+from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
@@ -90,6 +91,9 @@ class Chinup(chinup.Chinup):
 
     @classmethod
     def _social_token_queryset(cls, chinups, **kwargs):
+        site_id = getattr(django_settings, 'SITE_ID', None)
+        if site_id:
+            kwargs.setdefault('app__sites__id', site_id)
         return SocialToken.objects.filter(
             account__user__in=set(c.user for c in chinups),
             **kwargs)
