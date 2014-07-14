@@ -12,12 +12,11 @@ CACHE = None
 
 try:
     from django.conf import settings
-except ImportError:
-    pass
-else:
     for name in dir(settings):
         if name.startswith('CHINUP_'):
             locals()[name[7:]] = getattr(settings, name)
+except ImportError:
+    pass
 
 
 __all__ = [name for name in locals().keys() if name.isupper()]
