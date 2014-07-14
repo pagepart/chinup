@@ -8,7 +8,7 @@ except ImportError:
 from .exceptions import *
 
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 # Configure logging to avoid warning.
