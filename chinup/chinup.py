@@ -179,11 +179,18 @@ class Chinup(object):
         if limit and len(self.data) < int(limit):
             return
 
-        # Instantiate without token, since next_link will already
-        # contain the token.  Putting this on the queue now enables
+        # Putting this on the queue now enables
         # paging of one chinup to simultaneously prefetch paged data
         # for all chinups in the same queue.
-        self._next_page = self.__class__(
+        self._next_page = self._get_next_page(next_link)
+
+    def _get_next_page(self, next_link, **kwargs):
+        """
+        Returns the chinup corresponding to the next page.
+        This accepts kwargs for the sake of subclasses.
+        """
+        # Instantiate without token, since link already has it.
+        return self.__class__(
             queue=self.queue,
             method=self.request['method'],
             path=URL(next_link).with_scheme('').with_netloc('')[1:],
@@ -191,7 +198,7 @@ class Chinup(object):
             raise_exceptions=self.raise_exceptions,
             callback=self.callback,
             prefetch_next_page=self.prefetch_next_page,
-        )
+            **kwargs)
 
     def next_page(self):
         """
