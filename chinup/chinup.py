@@ -265,9 +265,11 @@ class Chinup(object):
 
     def __setstate__(self, d):
         self.__dict__.update(d)
-        if not self.completed:
-            self.queue = get_queue(self.queue)
-            self.queue.append(self)
+
+        # Put it back on the current queue for app_token. This means it will be
+        # considered for completion, but will be ignored if self.completed.
+        self.queue = get_queue(self.queue)
+        self.queue.append(self)
 
     def make_request_dict(self):
         """
