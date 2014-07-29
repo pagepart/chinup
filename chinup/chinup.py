@@ -259,6 +259,8 @@ class Chinup(object):
         return self.data.items()
 
     def __getstate__(self):
+        if self.callback and self.completed:
+            self.callback = None
         assert not self.callback, "can't pickle chinup with callback"
         return dict(self.__dict__,
                     queue=self.queue.app_token)
