@@ -11,8 +11,8 @@ from urlobject import URLObject as URL
 
 from .exceptions import ChinupCanceled, PagingError
 from .lowlevel import parse_fb_exception
-from .queue import get_queue
-from .util import partition
+from .queue import ChinupQueue
+from .util import partition, get_modattr
 from . import settings
 
 
@@ -332,6 +332,7 @@ class Chinup(object):
 
 class ChinupBar(object):
     chinup_class = Chinup
+    queue_class = ChinupQueue
 
     def __init__(self, token=None, app_token=None,
                  raise_exceptions=True, prefetch_next_page=True):
@@ -345,14 +346,18 @@ class ChinupBar(object):
         self.raise_exceptions = raise_exceptions
         self.prefetch_next_page = prefetch_next_page
 
-    def _get_queue(self):
-        return get_queue(self.app_token)
+    def _get_queue(self, **kwargs):
+        if isinstance(self.queue_class, basestring):
+            self.queue_class = get_modattr(self.queue_class)
+        return self.queue_class(**kwargs)
 
     def _get_chinup(self, **kwargs):
+        if isinstance(self.chinup_class, basestring):
+            self.chinup_class = get_modattr(self.chinup_class)
         return self.chinup_class(**kwargs)
 
     def _query(self, method, path, data, defer):
-        queue = self._get_queue()
+        queue = self._get_queue(app_token=self.app_token)
         chinup = self._get_chinup(queue=queue, token=self.token,
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,

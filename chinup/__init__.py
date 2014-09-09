@@ -4,7 +4,7 @@ try:
     from .allauth import *
 except ImportError:
     from .chinup import *
-
+from .queue import *
 from .exceptions import *
 
 

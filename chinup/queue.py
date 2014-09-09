@@ -13,39 +13,25 @@ logger = logging.getLogger(__name__)
 _threadlocals = threading.local()
 
 
-def get_queue(app_token):
-    try:
-        qs = _threadlocals.chinup_queues
-    except AttributeError:
-        qs = _threadlocals.chinup_queues = {}
-    try:
-        q = qs[app_token]
-    except KeyError:
-        q = qs[app_token] = ChinupQueue(app_token)
-    return q
-
-
-def reset_queue(app_token):
-    try:
-        del _threadlocals.chinup_queues[app_token]
-    except (AttributeError, KeyError):
-        pass
-
-
-def delete_queues():
-    try:
-        del _threadlocals.chinup_queues
-    except AttributeError:
-        pass
-
-
 class ChinupQueue(object):
     """
     List of pending Chinups with a common app token.
     """
+    def __new__(cls, app_token):
+        try:
+            qs = _threadlocals.chinup_queues
+        except AttributeError:
+            qs = _threadlocals.chinup_queues = {}
+        try:
+            q = qs[app_token]
+        except KeyError:
+            q = qs[app_token] = super(ChinupQueue, cls).__new__(cls, app_token)
+            q.chinups = []
+        return q
+
     def __init__(self, app_token):
         self.app_token = app_token
-        self.chinups = []
+        # self.chinups set in __new__ for per-token singleton
 
     def append(self, req):
         self.chinups.append(req)
@@ -117,3 +103,13 @@ class ChinupQueue(object):
 
     def __getstate__(self):
         raise AssertionError("Why are you pickling a ChinupQueue?")
+
+
+def delete_queues():
+    try:
+        del _threadlocals.chinup_queues
+    except AttributeError:
+        pass
+
+
+__all__ = ['ChinupQueue', 'delete_queues']
