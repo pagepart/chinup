@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import sys
+
 
 def partition(cond, seq, parts=2):
     """
@@ -11,3 +13,10 @@ def partition(cond, seq, parts=2):
     for e in seq:
         res[int(cond(e))].append(e)
     return res
+
+
+def get_modattr(s):
+    assert isinstance(s, basestring) and '.' in s
+    pkg, attr = s.rsplit('.', 1)
+    __import__(pkg)
+    return getattr(sys.modules[pkg], attr)
