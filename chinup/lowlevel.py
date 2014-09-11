@@ -14,7 +14,9 @@ from requests.utils import guess_filename
 
 from . import settings
 from .cache import get_cache
-from .exceptions import OAuthError, TransportError, FacebookError
+from .exceptions import (FacebookError, BatchFacebookError,
+                         OAuthError, BatchOAuthError,
+                         TransportError, ChinupError)
 
 
 logger = logging.getLogger(__name__)
@@ -75,11 +77,15 @@ def batch_request(app_token, reqs, url='https://graph.facebook.com'):
     # Attempt to parse before checking HTTP status, because
     # parse_fb_response() will raise an exception for Facebook enumerated
     # error responses.
-    resps = parse_fb_response(r)
+    try:
+        resps = parse_fb_response(r)
+    except ChinupError as e:
+        e.__class__ = e._lowlevel_class
+        raise
     if r.status_code != 200:
-        raise FacebookError("HTTP {}: {}".format(r.status_code, resps))
+        raise BatchFacebookError("HTTP {}: {}".format(r.status_code, resps))
     if not isinstance(resps, list):
-        raise FacebookError(resps)
+        raise BatchFacebookError(resps)
 
     # Handle etags in responses.
     if settings.ETAGS:
