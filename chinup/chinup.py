@@ -332,9 +332,6 @@ class Chinup(object):
                 access_token=self.token)
 
         if method != 'POST':
-            # HACK since URLObject doesn't like ints in query values.
-            data = {k: str(v) if isinstance(v, int) else v
-                    for k, v in data.items()}
             relative_url = relative_url.set_query_params(sorted(data.items()))
 
         req = dict(

@@ -18,7 +18,7 @@ maintainer = 'PagePart Team'
 maintainer_email = 'opensource@pagepart.com'
 license = 'MIT'
 install_requires = []
-requires = ['URLObject', 'requests']
+requires = ['URLObject>=2.4.0', 'requests']
 
 
 def get_version(package):
