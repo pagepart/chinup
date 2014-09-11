@@ -33,8 +33,20 @@ class ChinupQueue(object):
         self.app_token = app_token
         # self.chinups set in __new__ for per-token singleton
 
-    def append(self, req):
-        self.chinups.append(req)
+    def append(self, chinup, dedup=None):
+        """
+        Adds chinup to the queue.
+        Returns chinup, which is important if settings.DEDUP is enabled.
+        """
+        if dedup is None:
+            dedup = settings.DEDUP
+        if dedup:
+            same = next((c for c in self.chinups if c == chinup), None)
+            if same:
+                logger.debug("Deduping %r", chinup)
+                return same
+        self.chinups.append(chinup)
+        return chinup
 
     def sync(self, caller=None):
         """

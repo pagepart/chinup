@@ -8,6 +8,7 @@ DEBUG_HEADERS = False
 TESTING = False
 ETAGS = True
 CACHE = None
+DEDUP = True
 
 
 try:

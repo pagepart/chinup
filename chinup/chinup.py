@@ -55,7 +55,6 @@ class Chinup(object):
         self._response = None
         self._exception = None
         self._next_page = None
-        queue.append(self)
 
     def __unicode__(self, extra=''):
         r = self._response
@@ -195,7 +194,7 @@ class Chinup(object):
         This accepts kwargs for the sake of subclasses.
         """
         # Instantiate without token, since link already has it.
-        return self.__class__(
+        next_chinup = self.__class__(
             queue=self.queue,
             method=self.request['method'],
             path=URL(next_link).with_scheme('').with_netloc('')[1:],
@@ -204,6 +203,7 @@ class Chinup(object):
             callback=self.callback,
             prefetch_next_page=self.prefetch_next_page,
             **kwargs)
+        return next_chinup.queue.append(next_chinup)
 
     def next_page(self):
         """
@@ -309,7 +309,7 @@ class Chinup(object):
 
         # Put it back on the current queue for app_token. This means it will be
         # considered for completion, but will be ignored if self.completed.
-        self.queue.append(self)
+        self.queue.append(self, dedup=False)
 
     def make_request_dict(self):
         """
@@ -400,6 +400,7 @@ class ChinupBar(object):
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,
                                   prefetch_next_page=self.prefetch_next_page)
+        chinup = queue.append(chinup)
         if not defer:
             queue.sync(chinup)
             # For non-deferred requests, raise exception immediately rather
