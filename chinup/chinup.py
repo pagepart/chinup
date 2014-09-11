@@ -262,15 +262,13 @@ class Chinup(object):
         if self.callback and self.completed:
             self.callback = None
         assert not self.callback, "can't pickle chinup with callback"
-        return dict(self.__dict__,
-                    queue=self.queue.app_token)
+        return self.__dict__
 
     def __setstate__(self, d):
         self.__dict__.update(d)
 
         # Put it back on the current queue for app_token. This means it will be
         # considered for completion, but will be ignored if self.completed.
-        self.queue = get_queue(self.queue)
         self.queue.append(self)
 
     def make_request_dict(self):

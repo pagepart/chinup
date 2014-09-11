@@ -102,7 +102,12 @@ class ChinupQueue(object):
         self.chinups[:0] = chinups
 
     def __getstate__(self):
-        raise AssertionError("Why are you pickling a ChinupQueue?")
+        d = dict(self.__dict__)
+        del d['chinups']
+        return d
+
+    def __getnewargs__(self):
+        return (self.app_token,)
 
 
 def delete_queues():
