@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import stat
 import sys
 
 
@@ -20,3 +21,12 @@ def get_modattr(s):
     pkg, attr = s.rsplit('.', 1)
     __import__(pkg)
     return getattr(sys.modules[pkg], attr)
+
+
+def dev_inode(f):
+    """
+    Returns the (dev, inode) pair suitable for uniquely identifying a file,
+    just as os.path.samefile() would do.
+    """
+    st = os.fstat(f.fileno())
+    return st[stat.ST_DEV], st[stat.ST_INO]

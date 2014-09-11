@@ -12,7 +12,7 @@ from urlobject import URLObject as URL
 from .exceptions import ChinupCanceled, PagingError
 from .lowlevel import parse_fb_exception
 from .queue import ChinupQueue
-from .util import partition, get_modattr
+from .util import partition, get_modattr, dev_inode
 from . import settings
 
 
@@ -72,7 +72,12 @@ class Chinup(object):
 
     @property
     def completed(self):
-        return any(x is not None for x in [self._response, self._exception])
+        """
+        Returns False if this chinup remains to be synced, otherwise returns
+        a truthy tuple of (response, exception).
+        """
+        comp = (self._response, self._exception)
+        return any(x is not None for x in comp) and comp
 
     def _sync(self):
         if not self.completed:
@@ -255,6 +260,41 @@ class Chinup(object):
         assert isinstance(self.data, dict)
         return name in self.data
 
+    def __eq__(self, other):
+        """
+        Returns True if requests match. If both chinups are complete, then also
+        compares their completion characteristics (response and exception).
+        """
+        if self.__class__ != other.__class__:
+            logger.debug("__eq__ class mismatch")
+            return False
+
+        req, oreq = self._make_eq_dict(), other._make_eq_dict()
+        if req != oreq:
+            #logger.debug("__eq__ req mismatch")
+            return False
+
+        if self.callback:
+            if (self.callback != other.callback or
+                    self.completed != other.completed):
+                logger.debug("__eq__ callback mismatch")
+                return False
+
+        if ((self.completed or other.completed) and
+                self.completed != other.completed):
+            logger.debug("__eq__ completed mismatch")
+            return False
+
+        return True
+
+    def _make_eq_dict(self):
+        """
+        Returns a modified request dict suitable for comparing in __eq__.
+        """
+        req = self.make_request_dict()
+        req['files'] = map(dev_inode, req.get('files', []))
+        return req
+
     def items(self):
         return self.data.items()
 
@@ -295,7 +335,7 @@ class Chinup(object):
             # HACK since URLObject doesn't like ints in query values.
             data = {k: str(v) if isinstance(v, int) else v
                     for k, v in data.items()}
-            relative_url = relative_url.set_query_params(**data)
+            relative_url = relative_url.set_query_params(sorted(data.items()))
 
         req = dict(
             method=method,
@@ -306,7 +346,7 @@ class Chinup(object):
             data, files = map(dict, partition(lambda d: hasattr(d[1], 'read'),
                                               data.items()))
             if data:
-                req['body'] = urlencode(data)
+                req['body'] = urlencode(sorted(data.items()))
             if files:
                 req['files'] = files
 
