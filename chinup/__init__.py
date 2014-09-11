@@ -8,7 +8,7 @@ from .queue import *
 from .exceptions import *
 
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 
 # Configure logging to avoid warning.
