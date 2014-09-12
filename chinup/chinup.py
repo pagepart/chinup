@@ -151,7 +151,7 @@ class Chinup(object):
 
     def _maybe_raise_exception(self):
         if self.raise_exceptions and self.exception:
-            logger.warning("Raising %s for %r", self.exception.__class__.__name__, self)
+            logger.debug("Raising %s for %r", self.exception.__class__.__name__, self)
             raise self.exception
 
     def fetch_next_page(self):
