@@ -148,6 +148,8 @@ class Chinup(object):
     @exception.setter
     def exception(self, value):
         self._exception = value
+        if value:
+            self._exception.chinup = self
 
     def _maybe_raise_exception(self):
         if self.raise_exceptions and self.exception:
