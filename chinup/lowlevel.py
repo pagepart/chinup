@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 
 batches = []
 
-def batch_request(app_token, reqs, url='https://graph.facebook.com'):
+def batch_request(app_token, reqs, url=None):
     """
     Runs a batch request to the Facebook API.
     """
+    url = url or settings.GRAPH_URL
     required_keys = set(['method', 'relative_url'])
     assert all(required_keys <= set(r) for r in reqs)
 
