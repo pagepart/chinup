@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from collections import OrderedDict
 import json
 import logging
 try:
@@ -12,7 +13,7 @@ from urlobject import URLObject as URL
 from .exceptions import ChinupCanceled, PagingError
 from .lowlevel import parse_fb_exception
 from .queue import ChinupQueue
-from .util import partition, get_modattr, dev_inode
+from .util import partition, get_modattr, dev_inode, as_json
 from .conf import settings
 
 
@@ -339,8 +340,7 @@ class Chinup(object):
 
         if settings.MIGRATIONS:
             relative_url = relative_url.set_query_params(
-                migrations_override=json.dumps(settings.MIGRATIONS,
-                                               separators=(',', ':')))
+                migrations_override=as_json(settings.MIGRATIONS))
 
         if settings.RELATIVE_URL_HOOK:
             relative_url = settings.RELATIVE_URL_HOOK(relative_url)

@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import stat
 import sys
 
@@ -30,3 +31,10 @@ def dev_inode(f):
     """
     st = os.fstat(f.fileno())
     return st[stat.ST_DEV], st[stat.ST_INO]
+
+
+def as_json(data):
+    """
+    Consistent JSON dumping, with key sorting for test stability.
+    """
+    return json.dumps(data, sort_keys=True, separators=(',', ':'))

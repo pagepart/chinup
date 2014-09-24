@@ -17,6 +17,7 @@ from .conf import settings
 from .exceptions import (FacebookError, BatchFacebookError,
                          OAuthError, BatchOAuthError,
                          TransportError, ChinupError)
+from .util import as_json
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,8 @@ def batch_request(app_token, reqs, url=None):
     # request, but it doesn't hurt to put them in both places.
     url = url or settings.GRAPH_URL
     if settings.MIGRATIONS:
-        url = URL(url).set_query_params(sorted(settings.MIGRATIONS.items()))
+        url = URL(url).set_query_params(
+            migrations_override=as_json(settings.MIGRATIONS))
 
     # Split out binary attachments.
     # https://developers.facebook.com/docs/graph-api/making-multiple-requests/#binary
@@ -74,7 +76,7 @@ def batch_request(app_token, reqs, url=None):
     #  2. etags support,
     #  3. debugging.
     data = dict(access_token=app_token,
-                batch=json.dumps(reqs, separators=(',', ':')),
+                batch=as_json(reqs),
                 include_headers='true')
     try:
         r = requests.post(url, data=data, files=files)
