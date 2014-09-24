@@ -11,6 +11,7 @@ import sys
 
 import requests
 from requests.utils import guess_filename
+from urlobject import URLObject as URL
 
 from .conf import settings
 from .exceptions import (FacebookError, BatchFacebookError,
@@ -27,9 +28,15 @@ def batch_request(app_token, reqs, url=None):
     """
     Runs a batch request to the Facebook API.
     """
-    url = url or settings.GRAPH_URL
     required_keys = set(['method', 'relative_url'])
     assert all(required_keys <= set(r) for r in reqs)
+
+    # If migrations are overridden, add them to the batch url now.
+    # In fact most migrations only apply to the relative url inside each
+    # request, but it doesn't hurt to put them in both places.
+    url = url or settings.GRAPH_URL
+    if settings.MIGRATIONS:
+        url = URL(url).set_query_params(sorted(settings.MIGRATIONS.items()))
 
     # Split out binary attachments.
     # https://developers.facebook.com/docs/graph-api/making-multiple-requests/#binary

@@ -334,7 +334,16 @@ class Chinup(object):
                 access_token=self.token)
 
         if method != 'POST':
-            relative_url = relative_url.set_query_params(sorted(data.items()))
+            relative_url = relative_url.set_query_params(
+                sorted(data.items()))
+
+        if settings.MIGRATIONS:
+            relative_url = relative_url.set_query_params(
+                migrations_override=json.dumps(settings.MIGRATIONS,
+                                               separators=(',', ':')))
+
+        if settings.RELATIVE_URL_HOOK:
+            relative_url = settings.RELATIVE_URL_HOOK(relative_url)
 
         req = dict(
             method=method,

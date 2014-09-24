@@ -41,6 +41,7 @@ class PrefixedSettingsSource(object):
 
 settings = Settings(resolvable_settings=[
     'CACHE',
+    'RELATIVE_URL_HOOK',
 ])
 
 

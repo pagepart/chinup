@@ -10,3 +10,5 @@ TESTING = False
 ETAGS = True
 CACHE = None
 DEDUP = True
+MIGRATIONS = {}
+RELATIVE_URL_HOOK = None
