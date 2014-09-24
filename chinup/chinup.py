@@ -99,7 +99,7 @@ class Chinup(object):
                 body = json.loads(response['body'])
             except ValueError as e:
                 if not self._exception:
-                    self._exception = e
+                    self.exception = e
             else:
                 if (isinstance(body, dict) and ('data' in body or
                                                 'error' in body)):
@@ -113,7 +113,7 @@ class Chinup(object):
 
         # Keep parity with facepy exceptions.
         if not self._exception:
-            self._exception = parse_fb_exception(response)
+            self.exception = parse_fb_exception(response)
 
         # If this chinup has an associated callback, call it now. This allows
         # the caller to chain chinups, for example an async ads report. Don't
