@@ -334,6 +334,12 @@ class Chinup(object):
             relative_url = relative_url.set_query_params(
                 access_token=self.token)
 
+        if settings.API_VERSION:
+            path = relative_url.path.lstrip('/')
+            relative_url = relative_url.with_path(settings.API_VERSION)
+            if path:
+                relative_url = relative_url.add_path(path)
+
         if method != 'POST':
             relative_url = relative_url.set_query_params(
                 sorted(data.items()))
