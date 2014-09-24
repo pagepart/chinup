@@ -74,7 +74,7 @@ def batch_request(app_token, reqs, url=None):
     #  2. etags support,
     #  3. debugging.
     data = dict(access_token=app_token,
-                batch=json.dumps(reqs),
+                batch=json.dumps(reqs, separators=(',', ':')),
                 include_headers='true')
     try:
         r = requests.post(url, data=data, files=files)
