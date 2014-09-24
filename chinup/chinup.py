@@ -13,7 +13,7 @@ from .exceptions import ChinupCanceled, PagingError
 from .lowlevel import parse_fb_exception
 from .queue import ChinupQueue
 from .util import partition, get_modattr, dev_inode
-from . import settings
+from .conf import settings
 
 
 logger = logging.getLogger(__name__)

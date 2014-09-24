@@ -4,7 +4,7 @@ import logging
 
 from .lowlevel import batches
 from .queue import delete_queues
-from . import settings
+from .conf import settings
 
 
 logger = logging.getLogger(__name__)

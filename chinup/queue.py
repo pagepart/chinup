@@ -4,7 +4,7 @@ import logging
 import threading
 
 from .lowlevel import batch_request
-from . import settings
+from .conf import settings
 
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import re
 
 from .lowlevel import batches
 from .queue import delete_queues
-from . import settings
+from .conf import settings
 
 
 class ChinupTestMixin(object):

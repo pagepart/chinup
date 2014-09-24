@@ -12,8 +12,7 @@ import sys
 import requests
 from requests.utils import guess_filename
 
-from . import settings
-from .cache import get_cache
+from .conf import settings
 from .exceptions import (FacebookError, BatchFacebookError,
                          OAuthError, BatchOAuthError,
                          TransportError, ChinupError)
@@ -190,7 +189,7 @@ def add_etags(requests, app_token):
     The list of dicts (edicts) is passed back to caller, so it can be reused by
     handle_etags below.
     """
-    cache = get_cache()
+    cache = settings.CACHE
     edicts = [dict(request=r, key=etags_cache_key(r, app_token))
               for r in requests]
     if cache:
@@ -256,7 +255,7 @@ def handle_etags(responses, edicts):
         new_responses.append(response)
 
     # Update cached etags.
-    cache = get_cache()
+    cache = settings.CACHE
     if cache:
         cache.set_many(to_cache, timeout=86400)  # one day
     else:
