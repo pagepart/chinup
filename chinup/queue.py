@@ -33,6 +33,10 @@ class ChinupQueue(object):
         self.app_token = app_token
         # self.chinups set in __new__ for per-token singleton
 
+    def __repr__(self):
+        return '<{0.__class__.__name__} id={1} len={2} app_token={0.app_token}>'.format(
+            self, id(self), len(self.chinups))
+
     def append(self, chinup, dedup=None):
         """
         Adds chinup to the queue.
