@@ -334,12 +334,6 @@ class Chinup(object):
             relative_url = relative_url.set_query_params(
                 access_token=self.token)
 
-        if settings.API_VERSION:
-            path = relative_url.path.lstrip('/')
-            relative_url = relative_url.with_path(settings.API_VERSION)
-            if path:
-                relative_url = relative_url.add_path(path)
-
         if method != 'POST':
             relative_url = relative_url.set_query_params(
                 sorted(data.items()))
@@ -386,15 +380,17 @@ class ChinupBar(object):
     chinup_class = Chinup
     queue_class = ChinupQueue
 
-    def __init__(self, token=None, app_token=None,
+    def __init__(self, token=None, app_token=None, api_version=None,
                  raise_exceptions=True, prefetch_next_page=True):
         if not app_token:
             app_token = settings.APP_TOKEN
             if not app_token:
                 raise ValueError("Either app_token or settings.APP_TOKEN is required.")
 
-        self.app_token = app_token
         self.token = token
+        self.app_token = app_token
+        self.api_version = (settings.API_VERSION if api_version is None
+                            else api_version)
         self.raise_exceptions = raise_exceptions
         self.prefetch_next_page = prefetch_next_page
 
@@ -409,12 +405,16 @@ class ChinupBar(object):
         return self.chinup_class(**kwargs)
 
     def _query(self, method, path, data, defer):
+        if self.api_version:
+            path = '{}/{}'.format(self.api_version, path.lstrip('/'))
+
         queue = self._get_queue(app_token=self.app_token)
         chinup = self._get_chinup(queue=queue, token=self.token,
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,
                                   prefetch_next_page=self.prefetch_next_page)
         chinup = queue.append(chinup)
+
         if not defer:
             queue.sync(chinup)
             # For non-deferred requests, raise exception immediately rather
@@ -422,6 +422,7 @@ class ChinupBar(object):
             # POST which might not check its response.
             if self.raise_exceptions and chinup.exception:
                 raise chinup.exception
+
         return chinup
 
     def get(self, path, data=None, defer=True):
