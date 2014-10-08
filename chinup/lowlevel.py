@@ -133,7 +133,7 @@ def parse_fb_exception(data):
             eclass = OAuthError
         else:
             eclass = FacebookError
-        return eclass(error.get('message'), error.get('code'))
+        return eclass(error)
 
 
 def file_tuple(f, default_name=None, image=True):

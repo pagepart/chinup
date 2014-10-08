@@ -4,10 +4,34 @@ from __future__ import absolute_import, unicode_literals
 class FacebookErrorMixin(object):
     """Exception for Facebook enumerated errors."""
 
-    def __init__(self, message=None, code=None):
-        self.code = code
-        if code is not None:
-            message = '[{}] {}'.format(code, message)
+    def __init__(self, message=None):
+        self.error = None
+        self.code = None
+        self.subcode = None
+
+        if message is False:
+            message = "Graph API returned false"
+
+        elif isinstance(message, dict):
+            self.error = message
+            self.code = self.error.get('code')
+            self.subcode = self.error.get('error_subcode')
+            user_message = self.error.get('error_user_message') or ''
+            user_title = self.error.get('error_user_title') or ''
+            message = self.error.get('message')
+
+            if user_title == user_message:
+                user_title = ''
+            elif user_title and user_message:
+                user_title += ': '
+            if user_title or user_message:
+                message = '{} ({}{})'.format(message, user_title, user_message)
+
+            if self.code and self.subcode:
+                message = '[{}.{}] {}'.format(self.code, self.subcode, message)
+            elif self.code:
+                message = '[{}] {}'.format(self.code, message)
+
         super(FacebookErrorMixin, self).__init__(message)
 
 
