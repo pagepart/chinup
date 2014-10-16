@@ -269,7 +269,8 @@ class Chinup(object):
         compares their completion characteristics (response and exception).
         """
         if self.__class__ != other.__class__:
-            logger.debug("__eq__ class mismatch")
+            if isinstance(other, Chinup):
+                logger.debug("__eq__ class mismatch")
             return False
 
         req, oreq = self._make_eq_dict(), other._make_eq_dict()
