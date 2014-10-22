@@ -45,17 +45,21 @@ class Chinup(object):
             do something clever with d
     """
 
-    def __init__(self, queue, method, path, data, token=None,
-                 raise_exceptions=True, callback=None, prefetch_next_page=True):
+    def __init__(self, queue, method, path, data, **kwargs):
+        required = ['token', 'raise_exceptions', 'callback',
+                    'prefetch_next_page']
+        missing = set(required) - set(kwargs)
+        extra = set(kwargs) - set(required)
+        if missing or extra:
+            raise ValueError("Wrong kwargs: missing={!r}, extra={!r}".format(
+                list(missing), list(extra)))
+
         self.queue = queue
         self.request = dict(method=method, path=path, data=data)
-        self.token = token
-        self.raise_exceptions = raise_exceptions
-        self.callback = callback
-        self.prefetch_next_page = prefetch_next_page
         self._response = None
         self._exception = None
         self._next_page = None
+        self.__dict__.update(kwargs)
 
     def __unicode__(self, extra=''):
         r = self._response
@@ -196,11 +200,11 @@ class Chinup(object):
         Returns the chinup corresponding to the next page.
         This accepts kwargs for the sake of subclasses.
         """
-        # Instantiate without token, since link already has it.
         next_chinup = self.__class__(
             queue=self.queue,
             method=self.request['method'],
             path=URL(next_link).with_scheme('').with_netloc('')[1:],
+            token=None,  # next_link already has it
             data=None,  # all params are in next_link
             raise_exceptions=self.raise_exceptions,
             callback=self.callback,
@@ -381,19 +385,25 @@ class ChinupBar(object):
     chinup_class = Chinup
     queue_class = ChinupQueue
 
-    def __init__(self, token=None, app_token=None, api_version=None,
-                 raise_exceptions=True, prefetch_next_page=True):
+    def __init__(self, token=None, app_token=None, **kwargs):
         if not app_token:
             app_token = settings.APP_TOKEN
             if not app_token:
                 raise ValueError("Either app_token or settings.APP_TOKEN is required.")
 
+        defaults = dict(
+            api_version=settings.API_VERSION,
+            raise_exceptions=True,
+            prefetch_next_page=True,
+        )
+        extra = set(kwargs) - set(defaults)
+        if extra:
+            raise ValueError("Extra kwargs: {!r}".format(list(extra)))
+        defaults.update(kwargs)
+
         self.token = token
         self.app_token = app_token
-        self.api_version = (settings.API_VERSION if api_version is None
-                            else api_version)
-        self.raise_exceptions = raise_exceptions
-        self.prefetch_next_page = prefetch_next_page
+        self.__dict__.update(defaults)
 
     def _get_queue(self, **kwargs):
         if isinstance(self.queue_class, basestring):
