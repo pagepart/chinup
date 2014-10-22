@@ -284,14 +284,7 @@ class Chinup(object):
             #logger.debug("__eq__ req mismatch")
             return False
 
-        if self.callback:
-            if (self.callback != other.callback or
-                    self.completed != other.completed):
-                logger.debug("__eq__ callback mismatch")
-                return False
-
-        if ((self.completed or other.completed) and
-                self.completed != other.completed):
+        if self.completed != other.completed:
             logger.debug("__eq__ completed mismatch")
             return False
 
