@@ -22,9 +22,9 @@ exceptions.MissingToken = MissingToken
 
 class Chinup(chinup.Chinup):
 
-    def __init__(self, user=None, **kwargs):
+    def __init__(self, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(Chinup, self).__init__(**kwargs)
-        self.user = user
 
     def __unicode__(self, extra=''):
         extra = '{}user={}'.format(extra and extra + ' ', self.user)
@@ -102,9 +102,9 @@ class Chinup(chinup.Chinup):
 class ChinupBar(chinup.ChinupBar):
     chinup_class = Chinup
 
-    def __init__(self, user=None, **kwargs):
+    def __init__(self, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(ChinupBar, self).__init__(**kwargs)
-        self.user = user
 
     def _get_chinup(self, **kwargs):
         return super(ChinupBar, self)._get_chinup(
