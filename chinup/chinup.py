@@ -61,6 +61,9 @@ class Chinup(object):
         self._next_page = None
         self.__dict__.update(kwargs)
 
+        # and put it on the queue...
+        self.queue.append(self)
+
     def __unicode__(self, extra=''):
         r = self._response
         if (isinstance(r, dict) and r.get('code') == 200 and 'headers' in r and
@@ -200,7 +203,7 @@ class Chinup(object):
         Returns the chinup corresponding to the next page.
         This accepts kwargs for the sake of subclasses.
         """
-        next_chinup = self.__class__(
+        return self.__class__(
             queue=self.queue,
             method=self.request['method'],
             path=URL(next_link).with_scheme('').with_netloc('')[1:],
@@ -210,7 +213,6 @@ class Chinup(object):
             callback=None,  # only on first page
             prefetch_next_page=self.prefetch_next_page,
             **kwargs)
-        return next_chinup.queue.append(next_chinup)
 
     def next_page(self):
         """
@@ -297,11 +299,15 @@ class Chinup(object):
 
     def _make_eq_dict(self):
         """
-        Returns a modified request dict suitable for comparing in __eq__.
+        Returns a modified request dict suitable for __eq__ and __hash__.
         """
         req = self.make_request_dict()
-        req['files'] = map(dev_inode, req.get('files', []))
+        req['files'] = tuple(map(dev_inode, req.get('files', [])))
         return req
+
+    def __hash__(self):
+        eq_dict = self._make_eq_dict()
+        return hash(tuple(sorted(eq_dict.items())))
 
     def items(self):
         return self.data.items()
@@ -317,7 +323,7 @@ class Chinup(object):
 
         # Put it back on the current queue for app_token. This means it will be
         # considered for completion, but will be ignored if self.completed.
-        self.queue.append(self, dedup=False)
+        self.queue.append(self)
 
     def make_request_dict(self):
         """
@@ -425,7 +431,6 @@ class ChinupBar(object):
                                   raise_exceptions=self.raise_exceptions,
                                   callback=callback,
                                   prefetch_next_page=self.prefetch_next_page)
-        chinup = queue.append(chinup)
 
         if not defer:
             queue.sync(chinup)

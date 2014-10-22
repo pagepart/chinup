@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from collections import OrderedDict
 import logging
 import threading
 
@@ -40,17 +41,9 @@ class ChinupQueue(object):
     def append(self, chinup, dedup=None):
         """
         Adds chinup to the queue.
-        Returns chinup, which is important if settings.DEDUP is enabled.
         """
-        if dedup is None:
-            dedup = settings.DEDUP
-        if dedup:
-            same = next((c for c in self.chinups if c == chinup), None)
-            if same:
-                logger.debug("Deduping %r", chinup)
-                return same
+        logger.debug("Queuing %r", chinup)
         self.chinups.append(chinup)
-        return chinup
 
     def sync(self, caller=None):
         """
@@ -64,6 +57,12 @@ class ChinupQueue(object):
         # processing (this can happen in chinup callback, or for paged
         # responses).
         chinups, self.chinups = self.chinups, []
+
+        # Deduplicate to get the list of unique chinups.
+        if settings.DEDUP:
+            chinups, dups = self.dedup(chinups)
+        else:
+            dups = None
 
         # Some requests in the batch might time out rather than completing.
         # Continue batching until the calling chinup is satisfied, or until we
@@ -97,7 +96,12 @@ class ChinupQueue(object):
                 # Don't set response for timeouts, so they'll be automatically
                 # tried again when .data is accessed.
                 if r is not None:
-                    cu.response = r
+                    if dups:
+                        # Insert the response in all the dups.
+                        for dup in dups[cu]:
+                            dup.response = r
+                    else:
+                        cu.response = r
                 logger.log(logging.INFO if settings.DEBUG_REQUESTS else logging.DEBUG,
                            '%s%r', 'TIMEOUT ' if r is None else '', cu)
 
@@ -111,11 +115,32 @@ class ChinupQueue(object):
             # Ugh, this means we timed out without making progress.
             caller.exception = QueueTimedOut("Couldn't make enough progress to complete request.")
 
+        # Restore chinups from dups, in case some aren't completed.
+        if dups:
+            chinups = [cu for v in dups.values() for cu in v
+                       if not cu.completed]
+
         # Drop completed chinups from the queue to prevent clogging with
         # completed chinups. Put them on the front of the queue, rather than
         # replacing it entirely, in case there were callbacks (in the response
         # setter) that added to self.chinups.
         self.chinups[:0] = chinups
+
+    @classmethod
+    def dedup(cls, chinups):
+        """
+        Returns (uniques, dups) where the latter is a dict of lists indexed by
+        the former.
+        """
+        dups = OrderedDict()
+        for c in chinups:
+            clist = dups.setdefault(c, [])
+            if clist:
+                logger.debug("Dedup %r", c)
+            clist.append(c)
+        uniques = [clist[0] for clist in dups.values()]
+        logger.debug("Deduping reduced from %s to %s.", len(chinups), len(uniques))
+        return uniques, dups
 
     def __getstate__(self):
         d = dict(self.__dict__)
