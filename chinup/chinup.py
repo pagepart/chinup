@@ -207,7 +207,7 @@ class Chinup(object):
             token=None,  # next_link already has it
             data=None,  # all params are in next_link
             raise_exceptions=self.raise_exceptions,
-            callback=self.callback,
+            callback=None,  # only on first page
             prefetch_next_page=self.prefetch_next_page,
             **kwargs)
         return next_chinup.queue.append(next_chinup)
