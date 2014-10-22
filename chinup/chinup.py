@@ -47,7 +47,8 @@ class Chinup(object):
 
     def __init__(self, queue, method, path, data, **kwargs):
         required = ['token', 'raise_exceptions', 'callback',
-                    'prefetch_next_page', 'migrations']
+                    'prefetch_next_page', 'summary_info',
+                    'migrations']
         missing = set(required) - set(kwargs)
         extra = set(kwargs) - set(required)
         if missing or extra:
@@ -212,6 +213,7 @@ class Chinup(object):
             raise_exceptions=self.raise_exceptions,
             callback=None,  # only on first page
             prefetch_next_page=self.prefetch_next_page,
+            summary_info=False,  # don't force after first page
             migrations=self.migrations,
             **kwargs)
 
@@ -242,10 +244,23 @@ class Chinup(object):
 
     def __len__(self):
         """
-        Returns the length of data in this chinup, not all pages,
-        to avoid infinite recursion because Python calls len(obj) as a first
-        step to list(obj).
+        Returns the number of records in data. Tries to use summary if
+        available, otherwise returns the length of data in this chinup rather
+        than all pages, to avoid infinite recursion because Python calls
+        len(obj) as a first step to list(obj).
         """
+        if isinstance(self.response, dict):
+            count = None
+            try:
+                count = self.response['summary']['total_count']
+            except Exception:
+                pass
+            if isinstance(count, int):
+                return count
+            if self.summary_info:
+                logger.debug("summary_info=%r but response['summary']=%r",
+                             self.summary_info, self.response.get('summary'))
+
         # If self.raise_exceptions is False, then self.data might be None.
         # Don't accidentally raise an exception here with len(None).
         return len(self.data or [])
@@ -343,6 +358,10 @@ class Chinup(object):
             relative_url = relative_url.set_query_params(
                 sorted(data.items()))
 
+        if self.summary_info:
+            relative_url = relative_url.set_query_params(
+                summary='true')
+
         if self.migrations:
             relative_url = relative_url.set_query_params(
                 migrations_override=as_json(self.migrations))
@@ -395,6 +414,7 @@ class ChinupBar(object):
             api_version=settings.API_VERSION,
             raise_exceptions=True,
             prefetch_next_page=True,
+            summary_info=settings.SUMMARY_INFO,
             migrations=settings.MIGRATIONS,
         )
         extra = set(kwargs) - set(defaults)
@@ -426,6 +446,7 @@ class ChinupBar(object):
                                   raise_exceptions=self.raise_exceptions,
                                   callback=callback,
                                   prefetch_next_page=self.prefetch_next_page,
+                                  summary_info=self.summary_info,
                                   migrations=self.migrations)
 
         if not defer:
