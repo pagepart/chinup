@@ -415,7 +415,7 @@ class ChinupBar(object):
             self.chinup_class = get_modattr(self.chinup_class)
         return self.chinup_class(**kwargs)
 
-    def _query(self, method, path, data, defer):
+    def _query(self, method, path, data, defer, callback):
         if self.api_version:
             path = '{}/{}'.format(self.api_version, path.lstrip('/'))
 
@@ -423,6 +423,7 @@ class ChinupBar(object):
         chinup = self._get_chinup(queue=queue, token=self.token,
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,
+                                  callback=callback,
                                   prefetch_next_page=self.prefetch_next_page)
         chinup = queue.append(chinup)
 
@@ -436,20 +437,20 @@ class ChinupBar(object):
 
         return chinup
 
-    def get(self, path, data=None, defer=True):
-        return self._query('GET', path, data, defer)
+    def get(self, path, data=None, defer=True, callback=None):
+        return self._query('GET', path, data, defer, callback)
 
-    def post(self, path, data, defer=False):
-        return self._query('POST', path, data, defer)
+    def post(self, path, data, defer=False, callback=None):
+        return self._query('POST', path, data, defer, callback)
 
-    def put(self, path, data, defer=False):
-        return self._query('PUT', path, data, defer)
+    def put(self, path, data, defer=False, callback=None):
+        return self._query('PUT', path, data, defer, callback)
 
-    def delete(self, path, data=None, defer=False):
-        return self._query('DELETE', path, data, defer)
+    def delete(self, path, data=None, defer=False, callback=None):
+        return self._query('DELETE', path, data, defer, callback)
 
     def debug_token(self, path='', data=None, defer=True):
-        return self._query('DEBUG_TOKEN', path, data, defer)
+        return self._query('DEBUG_TOKEN', path, data, defer, None)
 
 
 __all__ = ['Chinup', 'ChinupBar']
