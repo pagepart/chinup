@@ -47,7 +47,7 @@ class Chinup(object):
 
     def __init__(self, queue, method, path, data, **kwargs):
         required = ['token', 'raise_exceptions', 'callback',
-                    'prefetch_next_page']
+                    'prefetch_next_page', 'migrations']
         missing = set(required) - set(kwargs)
         extra = set(kwargs) - set(required)
         if missing or extra:
@@ -212,6 +212,7 @@ class Chinup(object):
             raise_exceptions=self.raise_exceptions,
             callback=None,  # only on first page
             prefetch_next_page=self.prefetch_next_page,
+            migrations=self.migrations,
             **kwargs)
 
     def next_page(self):
@@ -342,9 +343,9 @@ class Chinup(object):
             relative_url = relative_url.set_query_params(
                 sorted(data.items()))
 
-        if settings.MIGRATIONS:
+        if self.migrations:
             relative_url = relative_url.set_query_params(
-                migrations_override=as_json(settings.MIGRATIONS))
+                migrations_override=as_json(self.migrations))
 
         if settings.RELATIVE_URL_HOOK:
             relative_url = settings.RELATIVE_URL_HOOK(relative_url)
@@ -394,6 +395,7 @@ class ChinupBar(object):
             api_version=settings.API_VERSION,
             raise_exceptions=True,
             prefetch_next_page=True,
+            migrations=settings.MIGRATIONS,
         )
         extra = set(kwargs) - set(defaults)
         if extra:
@@ -423,7 +425,8 @@ class ChinupBar(object):
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,
                                   callback=callback,
-                                  prefetch_next_page=self.prefetch_next_page)
+                                  prefetch_next_page=self.prefetch_next_page,
+                                  migrations=self.migrations)
 
         if not defer:
             queue.sync(chinup)
