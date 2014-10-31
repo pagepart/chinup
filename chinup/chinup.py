@@ -98,6 +98,9 @@ class Chinup(object):
 
     @response.setter
     def response(self, response):
+        self._set_response(response)
+
+    def _set_response(self, response):
         self._response = response
 
         # Decode and promote response body. The body can be None if the HTTP

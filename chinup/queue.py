@@ -58,17 +58,39 @@ class ChinupQueue(object):
         # responses).
         chinups, self.chinups = self.chinups, []
 
+        # Run prepare_batch() over the entire queue once before starting on
+        # batches. This is an opportunity to replace users with tokens the most
+        # efficiently, for example.
+        if chinups:
+            chinups, _ =  chinups[0].prepare_batch(chinups)
+
         # Deduplicate to get the list of unique chinups.
         if settings.DEDUP:
             chinups, dups = self.dedup(chinups)
         else:
             dups = None
 
+        self._sync(chinups, caller)
+
+        # Reduplicate the responses into the dups.
+        if dups:
+            chinups = self.redup(chinups, dups)
+
+        if caller and not caller.completed:
+            # Ugh, this means we timed out without making progress.
+            caller.exception = QueueTimedOut("Couldn't make enough progress to complete request.")
+
+        # Drop completed chinups from the queue to prevent clogging with
+        # completed chinups. Put them on the front of the queue, rather than
+        # replacing it entirely, in case there were callbacks (in the response
+        # setter) that added to self.chinups.
+        self.chinups[:0] = [cu for cu in chinups if not cu.completed]
+
+    def _sync(self, chinups, caller):
         # Some requests in the batch might time out rather than completing.
         # Continue batching until the calling chinup is satisfied, or until we
         # stop making progress.
         progress = 1
-        chinups = [cu for cu in chinups if not cu.completed]
 
         while chinups and progress and not (caller and caller.completed):
 
@@ -96,12 +118,7 @@ class ChinupQueue(object):
                 # Don't set response for timeouts, so they'll be automatically
                 # tried again when .data is accessed.
                 if r is not None:
-                    if dups:
-                        # Insert the response in all the dups.
-                        for dup in dups[cu]:
-                            dup.response = r
-                    else:
-                        cu.response = r
+                    cu.response = r
                 logger.log(logging.INFO if settings.DEBUG_REQUESTS else logging.DEBUG,
                            '%s%r', 'TIMEOUT ' if r is None else '', cu)
 
@@ -110,21 +127,6 @@ class ChinupQueue(object):
 
             # Filter out the completed chinups for the next pass.
             chinups = [cu for cu in chinups if not cu.completed]
-
-        if caller and not caller.completed:
-            # Ugh, this means we timed out without making progress.
-            caller.exception = QueueTimedOut("Couldn't make enough progress to complete request.")
-
-        # Restore chinups from dups, in case some aren't completed.
-        if dups:
-            chinups = [cu for v in dups.values() for cu in v
-                       if not cu.completed]
-
-        # Drop completed chinups from the queue to prevent clogging with
-        # completed chinups. Put them on the front of the queue, rather than
-        # replacing it entirely, in case there were callbacks (in the response
-        # setter) that added to self.chinups.
-        self.chinups[:0] = chinups
 
     @classmethod
     def dedup(cls, chinups):
@@ -141,6 +143,22 @@ class ChinupQueue(object):
         uniques = [clist[0] for clist in dups.values()]
         logger.debug("Deduping reduced from %s to %s.", len(chinups), len(uniques))
         return uniques, dups
+
+    @classmethod
+    def redup(cls, chinups, dups):
+        """
+        Returns full suite of chinups, integrating dups by setting their responses.
+        """
+        for cu in chinups:
+            if not cu.completed:
+                continue
+            for i, dup in enumerate(dups[cu]):
+                if i == 0:
+                    assert dup is cu
+                else:
+                    assert not dup.completed
+                    dup.response = cu.response
+        return [cu for v in dups.values() for cu in v]
 
     def __getstate__(self):
         d = dict(self.__dict__)
