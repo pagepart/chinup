@@ -135,8 +135,8 @@ def parse_fb_exception(data):
                 eclass = FacebookError
             return eclass(error)
 
-        if data.get('code') != 200:
-            return FacebookFail(repr(data), code=data.get('code'))
+        if 'code' in data and data['code'] != 200:
+            return FacebookFail(repr(data), code=data['code'])
 
 
 def file_tuple(f, default_name=None, image=True):
