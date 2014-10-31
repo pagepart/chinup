@@ -1,6 +1,18 @@
 from __future__ import absolute_import, unicode_literals
 
 
+class FacebookFailMixin(object):
+    """Exception for Facebook failure without error dict."""
+
+    def __init__(self, message=None, code=None):
+        self.code = code
+        super(FacebookFailMixin, self).__init__(message)
+
+    def __unicode__(self):
+        return "HTTP {}: {}".format(
+            self.code, super(FacebookFailMixin, self).__unicode__())
+
+
 class FacebookErrorMixin(object):
     """Exception for Facebook enumerated errors."""
 
@@ -65,8 +77,12 @@ class TransportError(WrappedExceptionMixin, BatchError):
     """Transport error in low-level batch processing."""
 
 
+class BatchFacebookFail(FacebookFailMixin, BatchError):
+    """Facebook API failure without error info during batch processing."""
+
+
 class BatchFacebookError(FacebookErrorMixin, BatchError):
-    """Facebook API error during batch processing."""
+    """Facebook API error with error info during batch processing."""
 
 
 class BatchOAuthError(BatchFacebookError):
@@ -78,8 +94,13 @@ class ChinupError(Exception):
     _lowlevel_class = BatchError
 
 
+class FacebookFail(FacebookFailMixin, ChinupError):
+    """Facebook API failure without error info."""
+    _lowlevel_class = BatchFacebookFail
+
+
 class FacebookError(FacebookErrorMixin, ChinupError):
-    """Facebook API error in an individual Chinup"""
+    """Facebook API error with error info."""
     _lowlevel_class = BatchFacebookError
 
 

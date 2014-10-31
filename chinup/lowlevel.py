@@ -14,9 +14,8 @@ from requests.utils import guess_filename
 from urlobject import URLObject as URL
 
 from .conf import settings
-from .exceptions import (FacebookError, BatchFacebookError,
-                         OAuthError, BatchOAuthError,
-                         TransportError, ChinupError)
+from .exceptions import (FacebookFail, BatchFacebookFail, FacebookError,
+                         OAuthError, TransportError, ChinupError)
 from .util import as_json
 
 
@@ -92,9 +91,9 @@ def batch_request(app_token, reqs, url=None):
         e.__class__ = e._lowlevel_class
         raise
     if r.status_code != 200:
-        raise BatchFacebookError("HTTP {}: {}".format(r.status_code, resps))
+        raise BatchFacebookFail(repr(resps), code=r.status_code)
     if not isinstance(resps, list):
-        raise BatchFacebookError(resps)
+        raise BatchFacebookFail('Not a list: {!r}'.format(resps), code=200)
 
     # Handle etags in responses.
     if settings.ETAGS:
@@ -127,13 +126,17 @@ def parse_fb_exception(data):
     if data is False:
         return FacebookError("Facebook returned false")
 
-    if isinstance(data, dict) and 'error' in data:
-        error = data['error']
-        if error.get('type') == 'OAuthException':
-            eclass = OAuthError
-        else:
-            eclass = FacebookError
-        return eclass(error)
+    if isinstance(data, dict):
+        if 'error' in data:
+            error = data['error']
+            if error.get('type') == 'OAuthException':
+                eclass = OAuthError
+            else:
+                eclass = FacebookError
+            return eclass(error)
+
+        if data.get('code') != 200:
+            return FacebookFail(repr(data), code=data.get('code'))
 
 
 def file_tuple(f, default_name=None, image=True):
