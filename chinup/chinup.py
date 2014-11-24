@@ -253,13 +253,12 @@ class Chinup(object):
         len(obj) as a first step to list(obj).
         """
         if isinstance(self.response, dict):
-            count = None
             try:
                 count = self.response['summary']['total_count']
+                if isinstance(count, int):
+                    return count
             except Exception:
                 pass
-            if isinstance(count, int):
-                return count
             if self.summary_info:
                 logger.debug("summary_info=%r but response['summary']=%r",
                              self.summary_info, self.response.get('summary'))
