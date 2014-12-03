@@ -313,7 +313,13 @@ class Chinup(object):
         Returns a modified request dict suitable for __eq__ and __hash__.
         """
         req = self.make_request_dict()
-        req['files'] = tuple(map(dev_inode, req.get('files', [])))
+        if 'files' in req:
+            # Replace {name: file} with {name: (dev, inode)}
+            # ignoring closed files, since that indicates a completed POST.
+            files = {k: dev_inode(f) for k, f in req['files'].items()
+                     if not f.closed}
+            # and convert to a sorted tuple.
+            req['files'] = tuple(sorted(files.items()))
         return req
 
     def __hash__(self):
