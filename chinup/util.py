@@ -1,9 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import logging
 import os
 import stat
 import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 def partition(cond, seq, parts=2):
@@ -28,10 +32,17 @@ def get_modattr(s):
 def dev_inode(f):
     """
     Returns the (dev, inode) pair suitable for uniquely identifying a file,
-    just as os.path.samefile() would do.
+    just as os.path.samefile() would do. This includes a fallback for
+    fileno/fstat failure, since that happens on closed files, remote files,
+    etc.
     """
-    st = os.fstat(f.fileno())
-    return st[stat.ST_DEV], st[stat.ST_INO]
+    try:
+        st = os.fstat(f.fileno())
+        return st[stat.ST_DEV], st[stat.ST_INO]
+    except Exception as e:
+        logger.debug("%s in fstat/fileno for %r",
+                     e.__class__.__name__, f)
+    return -1, id(f)
 
 
 def as_json(data):

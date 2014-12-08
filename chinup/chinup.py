@@ -315,9 +315,7 @@ class Chinup(object):
         req = self.make_request_dict()
         if 'files' in req:
             # Replace {name: file} with {name: (dev, inode)}
-            # ignoring closed files, since that indicates a completed POST.
-            files = {k: dev_inode(f) for k, f in req['files'].items()
-                     if not f.closed}
+            files = {k: dev_inode(f) for k, f in req['files'].items()}
             # and convert to a sorted tuple.
             req['files'] = tuple(sorted(files.items()))
         return req
