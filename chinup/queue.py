@@ -6,6 +6,7 @@ import threading
 
 from .lowlevel import batch_request
 from .conf import settings
+from .util import get_proof
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class ChinupQueue(object):
     """
     List of pending Chinups with a common app token.
     """
-    def __new__(cls, app_token):
+    def __new__(cls, app_token, **kwargs):
         try:
             qs = _threadlocals.chinup_queues
         except AttributeError:
@@ -26,12 +27,15 @@ class ChinupQueue(object):
         try:
             q = qs[app_token]
         except KeyError:
-            q = qs[app_token] = super(ChinupQueue, cls).__new__(cls, app_token)
+            q = qs[app_token] = super(ChinupQueue, cls).__new__(
+                cls, app_token, **kwargs)
             q.chinups = []
         return q
 
-    def __init__(self, app_token):
+    def __init__(self, app_token, app_secret=None):
         self.app_token = app_token
+        self.appsecret_proof = (get_proof(key=app_secret, msg=app_token)
+                                if app_secret else None)
         # self.chinups set in __new__ for per-token singleton
 
     def __repr__(self):
@@ -111,7 +115,8 @@ class ChinupQueue(object):
             logger.log(logging.INFO if settings.DEBUG_REQUESTS else logging.DEBUG,
                        "Making batch request len=%s/%s queue=%s",
                        len(requests), len(chinups), id(self))
-            responses = batch_request(self.app_token, requests)
+            responses = batch_request(self.app_token, requests,
+                                      appsecret_proof=self.appsecret_proof)
 
             # Populate responses into chinups.
             for cu, r in zip(chinups, responses):

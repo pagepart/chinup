@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 GRAPH_URL = 'https://graph.facebook.com'
 API_VERSION = ''
+APP_SECRET = None
 APP_TOKEN = None
 DEBUG = False
 DEBUG_REQUESTS = DEBUG

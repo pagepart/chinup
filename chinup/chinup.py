@@ -13,7 +13,7 @@ from urlobject import URLObject as URL
 from .exceptions import ChinupCanceled, PagingError
 from .lowlevel import parse_fb_exception
 from .queue import ChinupQueue
-from .util import partition, get_modattr, dev_inode, as_json
+from .util import partition, get_modattr, dev_inode, as_json, get_proof
 from .conf import settings
 
 
@@ -48,7 +48,7 @@ class Chinup(object):
     def __init__(self, queue, method, path, data, **kwargs):
         required = ['token', 'raise_exceptions', 'callback',
                     'prefetch_next_page', 'summary_info',
-                    'migrations']
+                    'migrations', 'app_secret']
         missing = set(required) - set(kwargs)
         extra = set(kwargs) - set(required)
         if missing or extra:
@@ -359,6 +359,10 @@ class Chinup(object):
         elif self.token:
             relative_url = relative_url.set_query_params(
                 access_token=self.token)
+            if self.app_secret:
+                relative_url = relative_url.set_query_params(
+                    appsecret_proof=get_proof(key=self.app_secret,
+                                              msg=self.token))
 
         if method != 'POST':
             relative_url = relative_url.set_query_params(
@@ -422,6 +426,7 @@ class ChinupBar(object):
             prefetch_next_page=True,
             summary_info=settings.SUMMARY_INFO,
             migrations=settings.MIGRATIONS,
+            app_secret=settings.APP_SECRET,
         )
         extra = set(kwargs) - set(defaults)
         if extra:
@@ -446,8 +451,10 @@ class ChinupBar(object):
         if self.api_version:
             path = '{}/{}'.format(self.api_version, path.lstrip('/'))
 
-        queue = self._get_queue(app_token=self.app_token)
+        queue = self._get_queue(app_token=self.app_token,
+                                app_secret=self.app_secret)
         chinup = self._get_chinup(queue=queue, token=self.token,
+                                  app_secret=self.app_secret,
                                   method=method, path=path, data=data,
                                   raise_exceptions=self.raise_exceptions,
                                   callback=callback,

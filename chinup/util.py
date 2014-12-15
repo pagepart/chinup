@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import hmac
+import hashlib
 import json
 import logging
 import os
@@ -50,3 +52,16 @@ def as_json(data):
     Consistent JSON dumping, with key sorting for test stability.
     """
     return json.dumps(data, sort_keys=True, separators=(',', ':'))
+
+
+def get_proof(key, msg):
+    """
+    Returns appsecret_proof, see
+    https://developers.facebook.com/docs/graph-api/securing-requests
+    """
+    if isinstance(key, unicode):
+        key = key.encode('utf-8')
+    if isinstance(msg, unicode):
+        msg = msg.encode('utf-8')
+    h = hmac.new(key, msg, hashlib.sha256)
+    return h.hexdigest()

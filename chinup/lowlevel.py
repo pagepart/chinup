@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 batches = []
 
-def batch_request(app_token, reqs, url=None):
+def batch_request(app_token, reqs, appsecret_proof=None, url=None):
     """
     Runs a batch request to the Facebook API.
     """
@@ -77,6 +77,8 @@ def batch_request(app_token, reqs, url=None):
     data = dict(access_token=app_token,
                 batch=as_json(reqs),
                 include_headers='true')
+    if appsecret_proof:
+        data['appsecret_proof'] = appsecret_proof
     try:
         r = requests.post(url, data=data, files=files)
     except requests.RequestException as e:
