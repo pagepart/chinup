@@ -207,18 +207,35 @@ class Chinup(object):
         Returns the chinup corresponding to the next page.
         This accepts kwargs for the sake of subclasses.
         """
-        return self.__class__(
+
+        defaults = dict(
             queue=self.queue,
             method=self.request['method'],
             path=URL(next_link).with_scheme('').with_netloc('')[1:],
-            token=None,  # next_link already has it
+            token=None,
+            app_secret=None,
             data=None,  # all params are in next_link
             raise_exceptions=self.raise_exceptions,
             callback=None,  # only on first page
             prefetch_next_page=self.prefetch_next_page,
             summary_info=False,  # don't force after first page
             migrations=self.migrations,
-            **kwargs)
+        )
+
+        # There's no mention of applying appsecret_proof to paging links in the
+        # Facebook documentation, but if we have a secret and the token
+        # matches, then let's apply it.
+        next_url = URL(next_link)
+        if (self.app_secret and
+                'appsecret_proof' not in next_url.query_dict and
+                next_url.query_dict.get('access_token') == self.token):
+            defaults.update(
+                token=self.token,
+                app_secret=self.app_secret,
+            )
+
+        kwargs = dict(defaults, **kwargs)
+        return self.__class__(**kwargs)
 
     def next_page(self):
         """
