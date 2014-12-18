@@ -50,7 +50,7 @@ class Chinup(chinup.Chinup):
     @classmethod
     def _fetch_users(cls, chinups):
         chinups = [c for c in chinups if not c.completed and not c.token
-                   and isinstance(c.user, basestring)]
+                   and isinstance(c.user, (int, basestring))]
         if chinups:
             users = cls._users_dict(chinups)
             for c in chinups:
