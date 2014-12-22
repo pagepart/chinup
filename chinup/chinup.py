@@ -383,7 +383,7 @@ class Chinup(object):
 
         if method != 'POST':
             relative_url = relative_url.set_query_params(
-                sorted(data.items()))
+                self._encode_data(data))
 
         if self.summary_info:
             relative_url = relative_url.set_query_params(
@@ -405,11 +405,28 @@ class Chinup(object):
             data, files = map(dict, partition(lambda d: hasattr(d[1], 'read'),
                                               data.items()))
             if data:
-                req['body'] = urlencode(sorted(data.items()))
+                req['body'] = urlencode(self._encode_data(data))
             if files:
                 req['files'] = files
 
         return req
+
+    @classmethod
+    def _encode_data(cls, data):
+        """
+        Returns data dict as a list of (key, value) tuples.
+        List or dict values will be JSON encoded.
+        """
+        items = []
+
+        for k, v in sorted(data.items()):
+            if isinstance(v, list):
+                v = as_json(v)
+            elif callable(getattr(v, 'items', None)):
+                v = as_json(v)
+            items.append((k, v))
+
+        return items
 
     @classmethod
     def prepare_batch(cls, chinups):
