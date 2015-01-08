@@ -173,6 +173,9 @@ class ChinupQueue(object):
     def __getnewargs__(self):
         return (self.app_token,)
 
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
 
 def delete_queues():
     try:

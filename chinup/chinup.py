@@ -521,5 +521,11 @@ class ChinupBar(object):
     def debug_token(self, path='', data=None, defer=True):
         return self._query('DEBUG_TOKEN', path, data, defer, None)
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
 
 __all__ = ['Chinup', 'ChinupBar']
