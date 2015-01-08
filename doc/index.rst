@@ -32,6 +32,7 @@ Contents
 
    quickstart
    advanced
+   limitations
    settings
    api
 
