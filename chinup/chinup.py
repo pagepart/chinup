@@ -528,4 +528,30 @@ class ChinupBar(object):
         self.__dict__.update(d)
 
 
+try:
+    from yaml import YAMLObject
+except ImportError:
+    pass
+else:
+    class GetSetStateYAMLMixin(object):
+
+        @classmethod
+        def to_yaml(cls, dumper, data):
+            d = data.__getstate__()
+            data.__dict__.update(d)
+            return super(GetSetStateYAMLMixin, cls).to_yaml(dumper, data)
+
+        @classmethod
+        def from_yaml(cls, loader, node):
+            data = super(GetSetStateYAMLMixin, cls).from_yaml(loader, node)
+            data.__setstate__(data.__dict__)
+            return data
+
+    class ChinupYAMLObject(GetSetStateYAMLMixin, YAMLObject):
+        yaml_tag = '!Chinup'
+
+    class ChinupBarYAMLObject(GetSetStateYAMLMixin, YAMLObject):
+        yaml_tag = '!ChinupBar'
+
+
 __all__ = ['Chinup', 'ChinupBar']
