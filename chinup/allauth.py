@@ -110,5 +110,9 @@ class ChinupBar(chinup.ChinupBar):
         return super(ChinupBar, self)._get_chinup(
             user=self.user, **kwargs)
 
+    def __getstate__(self):
+        return dict(super(ChinupBar, self).__getstate__(),
+                    user=getattr(self.user, 'pk', self.user))
+
 
 __all__ = ['Chinup', 'ChinupBar', 'NoSuchUser', 'MissingToken']
