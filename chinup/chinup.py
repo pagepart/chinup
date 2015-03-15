@@ -91,6 +91,15 @@ class Chinup(object):
         if not self.completed:
             self.queue.sync(self)
 
+    def sync(self):
+        """
+        Forces a sync of this chinup, as accessing .data would do.
+        This is especially for chinups with a callback, where the
+        caller wants to sync for the sake of triggering the callback.
+        """
+        self._sync()
+        self._maybe_raise_exception()
+
     @property
     def response(self):
         self._sync()
