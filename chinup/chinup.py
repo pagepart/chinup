@@ -319,6 +319,10 @@ class Chinup(object):
             #logger.debug("__eq__ req mismatch")
             return False
 
+        if self.raise_exceptions != other.raise_exceptions:
+            logger.debug("__eq__ raise_exceptions mismatch")
+            return False
+
         if self.completed != other.completed:
             logger.debug("__eq__ completed mismatch")
             return False
