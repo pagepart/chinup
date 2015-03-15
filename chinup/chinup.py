@@ -130,7 +130,11 @@ class Chinup(object):
         # the caller to chain chinups, for example an async ads report. Don't
         # use this if you're not sure you need it.
         if self.callback:
-            self.callback(self)
+            try:
+                self.callback(self)
+            except Exception as e:
+                if not self._exception:
+                    self.exception = e
 
         # Prepare to fetch the next page.
         if self.prefetch_next_page:
