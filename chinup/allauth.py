@@ -76,8 +76,7 @@ class Chinup(chinup.Chinup):
                    and c.user]
         if chinups:
             social_tokens = cls._social_token_queryset(chinups)
-            social_tokens = social_tokens.select_related('account',
-                                                         'account__user')
+            social_tokens = social_tokens.select_related('account')
             assert (len(set(st.account.user_id for st in social_tokens)) ==
                     len(social_tokens))
             tokens = {st.account.user_id: st.token for st in social_tokens}
