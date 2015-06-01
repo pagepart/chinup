@@ -95,6 +95,7 @@ class Chinup(chinup.Chinup):
         if site_id:
             kwargs.setdefault('app__sites__id', site_id)
         return SocialToken.objects.filter(
+            account__provider='facebook',
             account__user__in=set(c.user for c in chinups),
             **kwargs)
 
