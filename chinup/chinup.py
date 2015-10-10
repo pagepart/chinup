@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import OrderedDict
+import collections
 import json
 import logging
 try:
@@ -20,7 +20,7 @@ from .conf import settings
 logger = logging.getLogger(__name__)
 
 
-class Chinup(object):
+class Chinup(collections.Mapping):
     """
     A single FB request/response. This shouldn't be instantiated directly,
     rather the caller should use a ChinupBar:
@@ -260,19 +260,24 @@ class Chinup(object):
 
     def __iter__(self):
         """
-        Yields successive records from self.data, advancing through paged data
-        automatically.
+        For paged list-based responses, yield successive records from
+        self.data, advancing through paged data automatically.
+
+        For non-paged dict-based responses, yield keys for collections.Mapping.
         """
+        paging = not isinstance(self.data, dict)
         chinup = self
         while chinup:  # will be None on last page
-            if not isinstance(chinup.data, list):
+            if not isinstance(chinup.data, (dict, list)):
                 if not self.exception:
                     self.exception = PagingError("Unexpected chinup.data while paging")
                     self.exception.chinup = chinup
-                    self._maybe_raise_exception()
+                self._maybe_raise_exception()
                 break
             for d in chinup.data:
                 yield d
+            if not paging:
+                break
             chinup = chinup.next_page()
 
     def __len__(self):
@@ -301,21 +306,14 @@ class Chinup(object):
         # Prevent truth value testing from calling len(self).
         return True
 
-    def __getitem__(self, name):
-        if isinstance(name, int) and isinstance(self.data, list):
-            if name < len(self.data):
-                return self.data[name]
+    def __getitem__(self, key):
+        if isinstance(key, int) and isinstance(self.data, list):
+            if key < len(self.data):
+                return self.data[key]
             else:
                 # Invoke paging
-                return list(self)[name]
-        return self.data[name]
-
-    def get(self, name, default=None):
-        return self.data.get(name, default)
-
-    def __contains__(self, name):
-        assert isinstance(self.data, dict)
-        return name in self.data
+                return list(self)[key]
+        return self.data[key]
 
     def __eq__(self, other):
         """
