@@ -386,10 +386,7 @@ class Chinup(collections.Mapping):
             if not self.token:
                 raise ValueError("can't debug_token without a token")
             method = 'GET'
-            path = 'debug_token'
-            if self.api_version:
-                path = '{}/{}'.format(self.api_version, path)
-            relative_url = URL(path).set_query_params(
+            relative_url = relative_url.set_query_params(
                 input_token=self.token)
 
         elif self.token:
@@ -537,7 +534,7 @@ class ChinupBar(object):
     def delete(self, path, data=None, defer=False, callback=None):
         return self._query('DELETE', path, data, defer, callback)
 
-    def debug_token(self, path='', data=None, defer=True):
+    def debug_token(self, path='debug_token', data=None, defer=True):
         return self._query('DEBUG_TOKEN', path, data, defer, None)
 
     def __getstate__(self):
