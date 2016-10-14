@@ -383,7 +383,8 @@ class Chinup(collections.Mapping):
         if method == 'DEBUG_TOKEN':
             # This is a special case where access_token should NOT be set on
             # the relative_url, but should be passed as input_token instead.
-            assert self.token, "can't debug_token without a token"
+            if not self.token:
+                raise ValueError("can't debug_token without a token")
             method = 'GET'
             relative_url = URL('debug_token').set_query_params(
                 input_token=self.token)
